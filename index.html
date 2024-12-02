@@ -640,98 +640,213 @@
             let currentRole = '';
 
             telecallerBtn.addEventListener('click', function() {
-                showTelecallerSelectionModal();
+                // Show modal immediately with default names
+                const telecallerModal = document.createElement('div');
+                telecallerModal.className = 'modal';
+                telecallerModal.style.display = 'block';
+                
+                telecallerModal.innerHTML = `
+                    ${editStyles}
+                    <div class="modal-content">
+                        <button class="back-button" style="position: absolute; top: 15px; left: 15px; background: black; border: none; cursor: pointer; color: white; font-size: 16px; font-weight: 500; padding: 5px 10px; border-radius: 5px;">
+                            ← Back
+                        </button>
+                        <h2>Select Telecaller</h2>
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            ${Array.from({length: 10}, (_, i) => `
+                                <div class="manager-button-container">
+                                    <button id="telecaller${i+1}Btn" class="manager-btn">
+                                        <span class="button-number">${i+1}.</span>
+                                        <span>Telecaller ${i+1}</span>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(telecallerModal);
+
+                // Add back button handler
+                telecallerModal.querySelector('.back-button').addEventListener('click', () => {
+                    document.body.removeChild(telecallerModal);
+                });
+
+                // Add click handlers for all telecaller buttons
+                for(let i = 1; i <= 10; i++) {
+                    document.getElementById(`telecaller${i}Btn`).addEventListener('click', () => {
+                        localStorage.setItem('telecallerEmail', `telecaller${i}@gmail.com`);
+                        const dialpadWindow = window.open('dialpad.html', '_blank');
+                        
+                        firebase.auth().signInWithEmailAndPassword(`telecaller${i}@gmail.com`, 'telecaller@123')
+                            .then(() => {
+                                telecallerModal.remove();
+                            })
+                            .catch(error => {
+                                dialpadWindow.close();
+                                alert("Authentication failed. Please try again.");
+                            });
+                    });
+                }
+
+                // Then update names from Firebase in the background
+                namesRef.once('value')
+                    .then(snapshot => {
+                        const names = snapshot.val() || {};
+                        for(let i = 1; i <= 10; i++) {
+                            const nameKey = `telecaller${getNumberWord(i)}`;
+                            const nameSpan = document.querySelector(`#telecaller${i}Btn span:last-child`);
+                            if (nameSpan && names[nameKey]) {
+                                nameSpan.textContent = names[nameKey];
+                            }
+                        }
+                    });
             });
 
             marketingManagerBtn.addEventListener('click', function() {
-                currentRole = 'manager';
-                showLoginModal('Admin Login Details');
+                // Show login modal instantly
+                const modal = document.getElementById('passwordModal');
+                modal.style.display = 'block';
+                document.querySelector('.modal-content h2').textContent = 'Admin Login Details';
+                
+                // Pre-fill remembered credentials if they exist
+                const rememberedEmail = localStorage.getItem('rememberedManagerEmail');
+                const rememberedPassword = localStorage.getItem('rememberedManagerPassword');
+                if (rememberedEmail && rememberedPassword) {
+                    document.getElementById('emailInput').value = rememberedEmail;
+                    document.getElementById('passwordInput').value = rememberedPassword;
+                    document.getElementById('rememberCheckbox').checked = true;
+                }
             });
 
-            function showLoginModal(title) {
-                modal.style.display = 'block';
-                document.querySelector('.modal-content h2').textContent = title;
-                
-                if (currentRole === 'manager') {
-                    // Check if manager credentials were previously remembered
-                    const rememberedEmail = localStorage.getItem('rememberedManagerEmail');
-                    const rememberedPassword = localStorage.getItem('rememberedManagerPassword');
-                    
-                    if (rememberedEmail && rememberedPassword) {
-                        emailInput.value = rememberedEmail;
-                        passwordInput.value = rememberedPassword;
-                        rememberCheckbox.checked = true;
-                    } else {
-                        emailInput.value = '';
-                        passwordInput.value = '';
-                        rememberCheckbox.checked = false;
-                    }
-                } else {
-                    if (localStorage.getItem(`remembered${currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}Email`)) {
-                        emailInput.value = localStorage.getItem(`remembered${currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}Email`);
-                        passwordInput.value = localStorage.getItem(`remembered${currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}Password`);
-                        rememberCheckbox.checked = true;
-                    } else {
-                        emailInput.value = '';
-                        passwordInput.value = '';
-                        rememberCheckbox.checked = false;
-                    }
-                }
-            }
-
             submitPassword.addEventListener('click', async function() {
-                submitPassword.disabled = true;
-                submitPassword.style.backgroundColor = '#808080';
-                submitPassword.textContent = 'Logging in...';
-                
                 const email = emailInput.value;
                 const password = passwordInput.value;
 
-                try {
-                    if (currentRole === 'manager' && email === 'admin@gmail.com' && password === 'admin@123') {
-                        // Only store admin credentials if remember me is checked
-                        if (rememberCheckbox.checked) {
-                            localStorage.setItem('rememberedManagerEmail', 'admin@gmail.com');
-                            localStorage.setItem('rememberedManagerPassword', 'admin@123');
-                        } else {
-                            localStorage.removeItem('rememberedManagerEmail');
-                            localStorage.removeItem('rememberedManagerPassword');
-                        }
-                        showManagerSelectionModal();
-                        modal.style.display = 'none';
-                    } else {
-                        alert("Invalid credentials. Access denied.");
-                    }
-                } catch (error) {
-                    alert("Invalid credentials. Access denied.");
-                } finally {
-                    submitPassword.disabled = false;
-                    submitPassword.style.backgroundColor = '';
-                    submitPassword.textContent = 'Submit';
-                }
-            });
+                if (email === 'admin@gmail.com' && password === 'admin@123') {
+                    // Hide login modal
+                    modal.style.display = 'none';
+                    
+                    // Show manager selection modal instantly
+                    const managerModal = document.createElement('div');
+                    managerModal.className = 'modal';
+                    managerModal.style.display = 'block';
+                    
+                    managerModal.innerHTML = `
+                        ${editStyles}
+                        <div class="modal-content">
+                            <button class="back-button" style="position: absolute; top: 15px; left: 15px; background: black; border: none; cursor: pointer; color: white; font-size: 16px; font-weight: 500; padding: 5px 10px; border-radius: 5px;">
+                                ← Back
+                            </button>
+                            <h2>Select Telecaller</h2>
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                ${Array.from({length: 10}, (_, i) => `
+                                    <div class="manager-button-container">
+                                        <button id="admin${i+1}Btn" class="manager-btn">
+                                            <span class="button-number">${i+1}.</span>
+                                            <span id="admin${i+1}Name">Telecaller ${i+1}</span>
+                                        </button>
+                                        <span class="edit-icon" id="editAdmin${i+1}">
+                                            <img src="images/editicon.png" alt="Edit" style="width: 33px; height: 33px;">
+                                        </span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div style="text-align: center;">
+                                <button class="save-button">Save</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(managerModal);
 
-            function handleSuccessfulLogin(email, role) {
-                if (role === 'manager') {
-                    // Only store admin credentials if remember me is checked
-                    if (rememberCheckbox.checked && email === 'admin@gmail.com') {
-                        localStorage.setItem('rememberedManagerEmail', 'admin@gmail.com');
-                        localStorage.setItem('rememberedManagerPassword', 'admin@123');
-                    } else if (!rememberCheckbox.checked) {
+                    // Add back button handler
+                    managerModal.querySelector('.back-button').addEventListener('click', () => {
+                        managerModal.remove();
+                    });
+
+                    // Add save button functionality
+                    managerModal.querySelector('.save-button').addEventListener('click', async () => {
+                        try {
+                            const names = {};
+                            for(let i = 1; i <= 10; i++) {
+                                const nameElement = document.getElementById(`admin${i}Name`);
+                                if (nameElement) {
+                                    names[`telecaller${getNumberWord(i)}`] = nameElement.textContent;
+                                }
+                            }
+                            await namesRef.update(names);
+                            alert('Names saved successfully!');
+                        } catch (error) {
+                            console.error('Error saving names:', error);
+                            alert('Failed to save names. Please try again.');
+                        }
+                    });
+
+                    // Add click handlers for all admin buttons
+                    for(let i = 1; i <= 10; i++) {
+                        const adminBtn = document.getElementById(`admin${i}Btn`);
+                        const editIcon = document.getElementById(`editAdmin${i}`);
+                        
+                        // Make names editable
+                        makeEditable(`admin${i}Name`, `editAdmin${i}`);
+                        
+                        // Add click handler for admin button
+                        adminBtn.addEventListener('click', () => {
+                            const adminNumber = i.toString();
+                            const adminEmail = `admin${adminNumber}@gmail.com`;
+                            const telecallerEmail = `telecaller${adminNumber}@gmail.com`;
+                            
+                            localStorage.setItem('selectedTelecaller', telecallerEmail);
+                            localStorage.setItem('adminEmail', adminEmail);
+                            localStorage.setItem('isManager', 'true');
+                            localStorage.setItem('selectedManagerName', document.getElementById(`admin${adminNumber}Name`).textContent);
+                            
+                            // Open dashboard immediately
+                            const dashboardWindow = window.open('maindashboard.html', '_blank');
+                            
+                            // Authenticate in background
+                            firebase.auth().signInWithEmailAndPassword(adminEmail, 'admin@123')
+                                .then(() => {
+                                    managerModal.remove();
+                                })
+                                .catch(error => {
+                                    console.error('Auth error:', error);
+                                    if (error.code === 'auth/user-not-found' || 
+                                        error.code === 'auth/wrong-password' ||
+                                        error.code === 'auth/invalid-email') {
+                                        dashboardWindow.close();
+                                        alert("Authentication failed. Please try again.");
+                                    }
+                                });
+                        });
+                    }
+
+                    // Update names from Firebase in background
+                    namesRef.once('value')
+                        .then(snapshot => {
+                            const names = snapshot.val() || {};
+                            for(let i = 1; i <= 10; i++) {
+                                const nameKey = `telecaller${getNumberWord(i)}`;
+                                const nameSpan = document.getElementById(`admin${i}Name`);
+                                if (nameSpan && names[nameKey]) {
+                                    nameSpan.textContent = names[nameKey];
+                                }
+                            }
+                        });
+
+                    // Handle remember me checkbox
+                    if (rememberCheckbox.checked) {
+                        localStorage.setItem('rememberedManagerEmail', email);
+                        localStorage.setItem('rememberedManagerPassword', password);
+                    } else {
                         localStorage.removeItem('rememberedManagerEmail');
                         localStorage.removeItem('rememberedManagerPassword');
                     }
+                } else {
+                    alert("Invalid credentials. Access denied.");
                 }
-                
-                if (role === 'telecaller') {
-                    localStorage.setItem('telecallerEmail', email);
-                    window.open('dialpad.html', '_blank');
-                } else if (role === 'manager') {
-                    localStorage.setItem('adminEmail', email);
-                    localStorage.setItem('isManager', 'true');
-                    window.open('maindashboard.html', '_blank');
-                }
-            }
+            });
 
             passwordToggle.addEventListener('click', function() {
                 if (passwordInput.type === 'password') {
