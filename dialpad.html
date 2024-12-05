@@ -880,19 +880,10 @@
                 }
 
                 if (totalSeconds >= 30 && totalSeconds <= 42) {
-                    // New logic for 30-42 seconds
-                    const randomNum = Math.random() * 100;
-                    if (randomNum < 75) {
-                        // 75% chance for 10, 11, 12, 13 seconds
-                        const weights = [10, 11, 12, 13];
-                        const randomIndex = Math.floor(Math.random() * weights.length);
-                        totalSeconds = weights[randomIndex];
-                    } else {
-                        // 25% chance for 8, 9 seconds
-                        const weights = [8, 9];
-                        const randomIndex = Math.floor(Math.random() * weights.length);
-                        totalSeconds = weights[randomIndex];
-                    }
+                    // Only 10, 11, 12, 13 seconds for 30-42 seconds duration
+                    const weights = [10, 11, 12, 13];
+                    const randomIndex = Math.floor(Math.random() * weights.length);
+                    totalSeconds = weights[randomIndex];
                 } else if (totalSeconds >= 18 && totalSeconds <= 30) {
                     // Medium duration logic (18-30 seconds)
                     const weights = [7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 10, 10, 11, 11, 12];
@@ -949,19 +940,10 @@
                 }
                 
                 if (totalSeconds >= 30 && totalSeconds <= 42) {
-                    // New logic for 30-42 seconds
-                    const randomNum = Math.random() * 100;
-                    if (randomNum < 75) {
-                        // 75% chance for 10, 11, 12, 13 seconds
-                        const weights = [10, 11, 12, 13];
-                        const randomIndex = Math.floor(Math.random() * weights.length);
-                        totalSeconds = weights[randomIndex];
-                    } else {
-                        // 25% chance for 8, 9 seconds
-                        const weights = [8, 9];
-                        const randomIndex = Math.floor(Math.random() * weights.length);
-                        totalSeconds = weights[randomIndex];
-                    }
+                    // Only 10, 11, 12, 13 seconds for 30-42 seconds duration
+                    const weights = [10, 11, 12, 13];
+                    const randomIndex = Math.floor(Math.random() * weights.length);
+                    totalSeconds = weights[randomIndex];
                 } else if (totalSeconds >= 18 && totalSeconds <= 30) {
                     // Existing logic for 18-30 seconds
                     const weights = [7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 10, 10, 11, 11, 12];
